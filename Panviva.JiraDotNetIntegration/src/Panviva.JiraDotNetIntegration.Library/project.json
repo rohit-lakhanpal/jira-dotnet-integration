@@ -5,7 +5,9 @@
   "tags": [ "" ],
   "projectUrl": "",
   "licenseUrl": "",
-
+  "dependencies": {
+    "Newtonsoft.Json": "8.0.3"
+  },
   "frameworks": {
     "net451": { },
     "dotnet5.4": {
