@@ -1,7 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Panviva.JiraDotNetIntegration.Library.Api.Common;
+using Panviva.JiraDotNetIntegration.Library.Api.V2.Models.Common.Base.Response;
 using Panviva.JiraDotNetIntegration.Library.Api.V2.Models.Search;
 
 namespace Panviva.JiraDotNetIntegration.Library.Api.V2.Services
@@ -11,20 +17,69 @@ namespace Panviva.JiraDotNetIntegration.Library.Api.V2.Services
         private readonly IAuthenticationProvider _authenticationProvider;
         private readonly IJiraServerLocationProvider _jiraServerLocationProvider;
 
-        public SearchService(IAuthenticationProvider authenticationProvider)
+        public SearchService(IAuthenticationProvider authenticationProvider, IJiraServerLocationProvider jiraServerLocationProvider)
         {
             _authenticationProvider = authenticationProvider;
+            _jiraServerLocationProvider = jiraServerLocationProvider;
         }
 
-        public SearchResponse RunJql(string jql)
+
+        public bool RunJql(string jql, int apiVersion, out SearchResponse successResponse, out ErrorResponse errorResponse)
         {
+            // run input validations
+            // TODO: Ensure JQL in not null. Or should we let Jira spit out standard error??
+            // TODO: Ensure apiVersion is supported
+
+            // gather necessary information
+            var searchApiUrl = GetSearchApiUrlBasedOnApiVersion(jql, apiVersion);
+
+            // create a web request
+            using (var httpClient = new HttpClient())
+            {
+                // set http headers
+                var authHeaders = _authenticationProvider.GetAuthenticationHeaders();
+                authHeaders.ToList().ForEach(h =>
+                {
+                    // TODO: check if we need to use ADD or Set
+                    httpClient.DefaultRequestHeaders.Add(h.Key, h.Value);
+
+                });
+                
+                // make a request
+                var asyncResponse = httpClient.GetAsync(searchApiUrl);
+                asyncResponse.RunSynchronously(); // TODO: Think running this sync makes more sense. Think about it you fool!
+
+
+                var result = asyncResponse.Result;
+                if (result.StatusCode == HttpStatusCode.OK)
+                { // Success
+                    Stream receiveStream = null;
+                    var copyToAsync = result.Content.CopyToAsync(receiveStream);
+                    copyToAsync.RunSynchronously();
+                    var jsonResult = new StreamReader(receiveStream, Encoding.UTF8).ReadToEnd();
+
+                    // read the r
+                    successResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<SearchResponse>(jsonResult);
+                }
+                else
+                { // Error 
+                    
+                }
+            }
+
+
             throw new NotImplementedException();
+        }
+
+        private string GetSearchApiUrlBasedOnApiVersion(string jql, int apiVersion)
+        {
+            return $"{_jiraServerLocationProvider.GetApiUrlBasedOnApiVerson(apiVersion)}/search?jql={Uri.EscapeUriString(jql)}";
         }
     }
 
     public interface ISearchService
     {
-        SearchResponse RunJql(string jql);
+        bool RunJql(string jql, int apiVersion, out SearchResponse successResponse, out ErrorResponse errorResponse);
     }
 
     public interface IJiraServerLocationProvider
@@ -33,7 +88,7 @@ namespace Panviva.JiraDotNetIntegration.Library.Api.V2.Services
         string GetApiUrlBasedOnApiVerson(int apiVersion);
     }
 
-    public class ExplicitJiraServerLocationProvider
+    public class ExplicitJiraServerLocationProvider: IJiraServerLocationProvider
     {
         private readonly bool _isSecured;
         private readonly string _hostname;
@@ -41,84 +96,19 @@ namespace Panviva.JiraDotNetIntegration.Library.Api.V2.Services
         public ExplicitJiraServerLocationProvider(bool isSecured, string hostname)
         {
             _isSecured = isSecured;
-            _hostname = hostname;
-        }
-    }
-
-    public class BasicAuthenticationProvider : IAuthenticationProvider
-    {
-        /// <summary>
-        /// The _user name
-        /// </summary>
-        private readonly string _userName;
-
-        /// <summary>
-        /// The _password
-        /// </summary>
-        private readonly string _password;
-
-        /// <summary>
-        /// The _headers
-        /// </summary>
-        private IDictionary<string, string> _headers;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="BasicAuthenticationProvider"/> class.
-        /// </summary>
-        /// <param name="userName">Name of the user.</param>
-        /// <param name="password">The password.</param>
-        public BasicAuthenticationProvider(string userName, string password)
-        {
-            _userName = userName;
-            _password = password;
-            _headers = new Dictionary<string, string>
-            {
-                {"Authorization", $"Basic {GetEncodedUsernameAndPassword()}"}
-            };
+            _hostname = hostname; // TODO: run validations on ensuring that the hostname is valid & only accepts 
         }
 
-        /// <summary>
-        /// Gets the authentication headers.
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="System.NotImplementedException"></exception>
-        public IDictionary<string, string> GetAuthenticationHeaders()
+        public string GetHostName()
         {
-            return _headers;
+            // https://panviva.atlassian.net/rest/api/2/
+            var protocol = _isSecured ? "https" : "http";
+            return $"{protocol}://{_hostname}";
         }
 
-        /// <summary>
-        /// Gets the encoded username and password.
-        /// </summary>
-        /// <returns></returns>
-        private string GetEncodedUsernameAndPassword()
+        public string GetApiUrlBasedOnApiVerson(int apiVersion)
         {
-            return $"{_userName}:{_password}".Base64Encode();
-        }
-    }
-
-    public interface IAuthenticationProvider
-    {
-        /// <summary>
-        /// Gets the authentication headers.
-        /// </summary>
-        /// <returns></returns>
-        IDictionary<string, string> GetAuthenticationHeaders();
-    }
-
-    public static class StringExtensions
-    {
-        /// <summary>
-        /// Base64s the encode.
-        /// </summary>
-        /// <param name="input">The input.</param>
-        /// <returns></returns>
-        public static string Base64Encode(this string input)
-        {
-            if (String.IsNullOrWhiteSpace(input)) return string.Empty;
-
-            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(input);
-            return System.Convert.ToBase64String(plainTextBytes);
+            throw new NotImplementedException();
         }
     }
 }
