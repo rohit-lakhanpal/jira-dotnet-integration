@@ -1,2 +1,2 @@
 language: csharp
-solution: Panviva.JiraDotNetIntegration.sln
+solution: Panviva.JiraDotNetIntegration/Panviva.JiraDotNetIntegration.sln
