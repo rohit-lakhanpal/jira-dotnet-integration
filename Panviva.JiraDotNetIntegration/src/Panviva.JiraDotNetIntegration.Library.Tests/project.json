@@ -1,4 +1,4 @@
-﻿{
+{
   "version": "1.0.0-*",
   "description": "Panviva.JiraDotNetIntegration.Library.Tests Class Library",
   "authors": [ "rohitl" ],
@@ -11,8 +11,16 @@
     "Panviva.JiraDotNetIntegration.Library": ""
   },
   "frameworks": {
-    "dnx451": { },
-    "dnxcore50": { }
+    "dnx451": {
+      "dependencies": {
+        
+      }
+    },
+    "dnxcore50": {
+      "dependencies": {
+
+      }
+    }
   },
   "commands": {
     "test": "xunit.runner.dnx"
