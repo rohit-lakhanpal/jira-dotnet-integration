@@ -10,6 +10,9 @@ namespace Panviva.JiraDotNetIntegration.Library.Tests
         {
         }
 
+        /// <summary>
+        /// Test_s the do work.
+        /// </summary>
         [Fact]
         public void Test_DoWork()
         {
