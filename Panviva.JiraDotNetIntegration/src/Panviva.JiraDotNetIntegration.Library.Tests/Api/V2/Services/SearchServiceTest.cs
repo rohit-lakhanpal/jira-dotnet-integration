@@ -45,7 +45,7 @@ namespace Panviva.JiraDotNetIntegration.Library.Tests.Api.V2.Services
         {
             _userName = "your_user_name";
             _password = "your_password";
-            _hostName = "panviva.atlassian.net";
+            _hostName = "yoursite.atlassian.net";
 
             _authenticationProvider = new BasicAuthenticationProvider(_userName, _password);
             _jiraServerLocationProvider = new ExplicitJiraServerLocationProvider(true, _hostName);

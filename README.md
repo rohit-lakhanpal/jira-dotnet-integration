@@ -6,6 +6,8 @@ This is a Portable Class Library implementation of Atlassian's Jira REST API (Ve
 
 This project is not endorsed or supported by Atlassian but is developed with ♥ by Panviva.
 
+It is currently tagged as a beta release & has a lot of scope for improvement. We'd appreciate any community engagement/comments/feedback.
+
 To install Jira .NET Integration (jira-dotnet-integration), run the following command in the Package Manager Console:
 
 ### Commands
@@ -58,4 +60,4 @@ Here's an example of querying the Jira API to run a custom query:
 
 
 ##Release Notes
-- 1.1.0-beta: We have started this project to query version 2 of the Search API.
+- 1.0.0-beta: We have started this project to query version 2 of the Search API.
